@@ -66,9 +66,7 @@ export const buildSystemTemplateData = (
   }>
 ): JsonObj => {
   return {
-    systemName:
-      args.config[NotificationsNamespace.Backend]?.systemName ??
-      args.config.systemName,
+    systemName: args.config.systemName,
     environment: args.config.environment,
     runtimeId: '',
     datetime: new Date().toISOString(),

@@ -40,7 +40,6 @@ export type CoreNotificationsConfig = Readonly<{
 export type BackendNotificationsConfig = Readonly<{
   adminUrl?: string
   adminEmails?: readonly string[]
-  systemName?: string
   email?: SmtpEmailConfig
   notifiers?: Readonly<Record<string, string>>
   defaultChannels?: readonly (NotificationChannel | string)[]
