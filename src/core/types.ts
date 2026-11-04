@@ -18,6 +18,7 @@ export enum NotificationStatus {
   Sent = 'sent',
   PartialFailure = 'partial_failure',
   Failed = 'failed',
+  Skipped = 'skipped',
 }
 
 export enum NotificationSeverity {

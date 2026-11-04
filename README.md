@@ -234,7 +234,7 @@ Your `data` is merged in. Fields the feature already set for that type stay as t
 
 ### Saved Notifications Model
 
-When `persistNotifications` is true and model CRUDs are available, each send is stored on the `Notifications` model. Status moves from `pending` to `sent`, `partial_failure`, or `failed`. This makes it easy for an admin UI to list those rows from the core models. However, nothing is written when persistence is left off.
+When `persistNotifications` is true and model CRUDs are available, each send is stored on the `Notifications` model. Status moves from `pending` to `sent`, `partial_failure`, or `failed`. When backend config has `enabled: false`, the package exits quickly, returns an in-memory notification with status `skipped`, and does not persist, enqueue, or deliver anything.
 
 `NotificationConfigs` is optional. With `useDatabaseConfig: true`, a row whose `key` is `default` (or `databaseConfigKey`) overrides the static config: admin emails, from address, and the notifier map. Saved template bodies live on `NotificationTemplates`, not on that row.
 
@@ -256,6 +256,16 @@ A single send can pass `ttl`, in seconds, to override `defaultTtl` for that noti
 Put this on `[NotificationsNamespace.Backend]`, which is `'@node-in-layers/notifications/backend'`.
 
 `email` is required only when `notifiers` is omitted. If `notifiers` is set, those channels are used and SMTP is not required.
+
+### `enabled`
+
+Notifications are enabled by default. Set `enabled: false` on `[NotificationsNamespace.Backend]` to turn the package into a no-op. Any call to `sendNotification`, `sendSystemNotification`, `sendExecutionFailureNotification`, or `sendUserNotification` returns quickly with status `skipped` and without persisting, enqueueing, or delivering anything.
+
+```typescript
+[NotificationsNamespace.Backend]: {
+  enabled: false,
+}
+```
 
 ### `email`
 
@@ -285,10 +295,10 @@ SMTP settings for the built-in email notifier. Omit this block when every channe
 
 ### Channels
 
-| Field             | Used for                                                                                                                                                                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `notifiers`       | Map of channel name to a `domain.feature` string. Omit this to use the built-in email notifier. If you set it, that map is what dispatch uses, and `email` is not required. Include the `email` key only when you still want the built-in mailer. |
-| `defaultChannels` | Channels used when a call does not pass `channels` or `targets`. Omit it to use every key in the notifier map. With `notifiers` omitted and `email` set, that is `email`.                                                                         |
+| Field             | Used for                                                                                                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `notifiers`       | Map of channel name to a custom `domain.feature` notifier. Omit this to use the built-in email channel when `email` is configured. Include an `email` key only when you want to override the built-in mailer with your own notifier. |
+| `defaultChannels` | Channels used when a call does not pass `channels` or `targets`. Omit it to use every key in the notifier map. With no notifier map and `email` set, that is `email`.                                                                |
 
 ```typescript
 [NotificationsNamespace.Backend]: {
@@ -298,10 +308,9 @@ SMTP settings for the built-in email notifier. Omit this block when every channe
     from: 'notifications@example.com',
   },
   notifiers: {
-    email: '@node-in-layers/notifications/backend.sendEmailNotification',
     slack: 'slack.sendSlackNotification',
   },
-  defaultChannels: ['email'],
+  defaultChannels: ['email', 'slack'],
 }
 ```
 
@@ -548,7 +557,7 @@ Point the channel at your feature. This setup does not use email:
 }
 ```
 
-Include `email` in that map, and set the `email` config, only when that channel should also send mail.
+When `email` is configured and no custom `email` notifier is set, the built-in email channel is used. Include `email` in the notifier map only when you want to override that built-in behavior.
 
 Send on that channel by name:
 

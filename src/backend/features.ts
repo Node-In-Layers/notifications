@@ -82,6 +82,8 @@ export const create = (
   const _getStaticConfig = () =>
     context.config[NotificationsNamespace.Backend] ?? {}
 
+  const _notificationsEnabled = () => _getStaticConfig().enabled !== false
+
   const _findDatabaseConfig = async (
     staticConfig: BackendNotificationsConfig
   ): Promise<NotificationConfigRecord | undefined> => {
@@ -352,7 +354,7 @@ export const create = (
       props: SendNotificationProps,
       crossLayerProps?: CrossLayerProps
     ): Promise<Response<SendNotificationResult>> => {
-      const notification = await _persistNotification({
+      const notificationProps = {
         id: randomUUID(),
         type: props.type ?? NotificationType.System,
         severity: props.severity ?? NotificationSeverity.Info,
@@ -372,7 +374,18 @@ export const create = (
         >,
         ttl: props.ttl,
         createdAt: new Date().toISOString(),
-      })
+      }
+
+      if (!_notificationsEnabled()) {
+        return {
+          notification: {
+            ...notificationProps,
+            status: NotificationStatus.Skipped,
+          },
+        }
+      }
+
+      const notification = await _persistNotification(notificationProps)
 
       const dispatched = await _dispatchNotification(
         notification,

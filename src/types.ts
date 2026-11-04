@@ -38,6 +38,7 @@ export type CoreNotificationsConfig = Readonly<{
 }>
 
 export type BackendNotificationsConfig = Readonly<{
+  enabled?: boolean
   adminUrl?: string
   adminEmails?: readonly string[]
   email?: SmtpEmailConfig
